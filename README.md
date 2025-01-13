@@ -15,7 +15,7 @@ Fastq-Checker 是一个高效的工具，用于快速分析 FASTQ 格式的测�
 确保您的系统中安装了 Rust 编程语言。然后，您可以通过以下命令克隆并构建项目：
 
 ```bash
-git clone https://github.com/yourusername/fastq-checker.git
+git clone https://github.com/songzhirui2024/fastq-checker.git
 cd fastq-checker
 cargo build --release
 ```
@@ -51,25 +51,3 @@ cargo build --release
 ## 许可证
 
 本项目采用 MIT 许可证 - 详情请见 [LICENSE](LICENSE) 文件
-
-MIT License
-
-Copyright (c) [2025] [songzhirui]
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
