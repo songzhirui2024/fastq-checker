@@ -1,0 +1,82 @@
+use std::fs::File;
+use std::collections::HashSet;
+use std::io::{BufRead, BufReader};
+use std::sync::{Arc, Mutex};
+use flate2::read::GzDecoder;
+use rayon::prelude::*;
+use clap::{Arg, Command};
+
+fn main() {
+    // 使用clap解析命令行参数
+    let matches = Command::new("Fastq Processor")
+        .arg(Arg::new("fastqgz")
+            .short('f')
+            .long("fastqgz")
+            .value_name("FILE")
+            .help("Path to the fastq.gz file")
+            .required(true))
+        .arg(Arg::new("threads")
+            .short('t')
+            .long("threads")
+            .value_name("THREADS")
+            .help("Number of threads to use")
+            .default_value("4"))
+        // 提前跳出参数，不指定该参数，表示如果检测到clean状态则提前退出；指定该参数，则不提前退出
+        .arg(Arg::new("exit")
+            .short('e')
+            .long("exit")
+            .value_name("EXIT")
+            .help("Exit early if clean state is detected")
+            .default_value(true))
+        .get_matches();
+
+    let fastq_file = matches.get_one::<String>("fastqgz").unwrap();
+    let num_threads: usize = matches.get_one::<String>("threads").unwrap().parse().expect("Invalid number of threads");
+    let exit_early = matches.get_flag("exit");
+
+    // 设置线程数
+    rayon::ThreadPoolBuilder::new().num_threads(num_threads).build_global().unwrap();
+
+    // 打开文件并创建GzDecoder
+    let file = File::open(fastq_file).expect("无法打开文件");
+    let decoder = GzDecoder::new(file);
+    let reader = BufReader::new(decoder);
+
+    // 使用Arc和Mutex保护共享变量
+    let sequence_lengths = Arc::new(Mutex::new(HashSet::new()));
+    let read_count = Arc::new(Mutex::new(0));
+
+    // 逐行读取文件
+    // 统计数据量
+    let mut total_base: usize = 0;
+    let lines: Vec<_> = reader.lines().collect();
+    lines.par_iter().enumerate().for_each(|(i, line)| {
+        let line = line.as_ref().expect("无法读取行");
+        if i % 4 == 1 { // 每四行中的第二行为序列行
+            let length = line.len();
+            let mut lengths = sequence_lengths.lock().unwrap();
+            lengths.insert(length);
+
+            let mut count = read_count.lock().unwrap();
+            *count += 1;
+            total_base += length;
+
+            // 如果set中元素个数超过1，输出状态为clean并退出
+            if lengths.len() > 1 {
+                if let Some(exit_early) = matches.get_one::<bool>("exit") {
+                    println!("文件名: {}, 读取的reads数: {}, 读取的bases数:{}, 状态: clean", fastq_file, total_base, *count);
+                    std::process::exit(0);
+                }
+            }
+        }
+    });
+
+    // 如果遍历完整个文件，set的元素个数为1，输出状态为raw
+    let lengths = sequence_lengths.lock().unwrap();
+    let count = read_count.lock().unwrap();
+    if lengths.len() == 1 {
+        println!("文件名: {}, 读取的reads数: {}, 读取的bases数:{}, 状态: raw", fastq_file, total_base, *count);
+    }else {
+        println!("文件名: {}, 读取的reads数: {}, 读取的bases数:{}, 状态: clean", fastq_file, total_base, *count);
+    }
+}
